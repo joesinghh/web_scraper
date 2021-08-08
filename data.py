@@ -1,6 +1,5 @@
 from selenium import webdriver
 from typing import Optional
-import chromedriver_binary
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
@@ -15,7 +14,6 @@ options = None
 # driver.get("https://twitter.com/login")
 # driver.implicitly_wait(3)
 def twitter_login(driver,usr_name="", passwd="",):
-
     
     try:
         username_input = WebDriverWait(driver,3).until(EC.presence_of_element_located((By.XPATH,'//*[@id="react-root"]/div/div/div[2]/main/div/div/div[2]/form/div/div[1]/label/div/div[2]/div/input')))

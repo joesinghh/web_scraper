@@ -13,7 +13,6 @@ class TwitterCards(object):
         user, handle, postdate, text, reply_count,retweet_count, likes = self.data
         count_lines = text.count("\n")
         text = text.replace("\n","")
-        print(text)
         date = postdate.split("T")[0]
         date = datetime.strptime(date,"%Y-%m-%d").date()
         date = date.strftime("%d%b%Y")

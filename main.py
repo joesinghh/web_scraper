@@ -1,8 +1,8 @@
 from enum import unique
-
 import selenium
 from data import twitter_data, twitter_login, extract_data, scroll_down_page, generate_tweet_id
 from tkinter import *
+from tkinter import ttk
 from tweets import TwitterCards
 from threading import Thread
 from PIL import Image, ImageTk
@@ -14,7 +14,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from collections.abc import Iterable
-import chromedriver_binary
 from bbc_sports import bbc_data, get_main_card, News_bbc, main, bbc_sport_driver
 from espn import espn_data, get_main_card, News_espn
 import random
@@ -27,6 +26,7 @@ get_rugby, get_basketball, get_golf, get_boxing
 import requests
 from datetime import datetime
 from weather import search_by_location, weather_main
+from search import search_sport
 
 
 
@@ -35,20 +35,9 @@ optionschrome = webdriver.ChromeOptions()
 optionschrome.add_argument("headless")
 # optionschrome = None
 
-
-
 twitter_driver = webdriver.Chrome('chromedriver.exe',options=optionschrome)
 twitter_driver.get("https://twitter.com/login")
 
-bbc_football_driver = None
-bbc_baseball_driver  = None
-bbc_golf_driver = None
-bbc_cricket_driver = None
-
-espn_football_driver = None
-espn_baseball_driver  = None
-espn_golf_driver = None
-espn_cricket_driver = None
 
 until_exit = 0
 city = None
@@ -61,51 +50,6 @@ search_1 = 0
 search_2 = 0
 search_3 = 0
 
-
-def set_drivers():
-    def bbc_drivers():
-        global bbc_baseball_driver, bbc_baseball_driver, bbc_football_driver, bbc_golf_driver
-        bbc_football_driver = webdriver.Chrome()
-        bbc_football_driver.get("https://www.bbc.com/sport/football")
-
-        bbc_baseball_driver = webdriver.Chrome()
-        bbc_baseball_driver.get("https://www.bbc.com/sport/baseball")
-
-        bbc_cricket_driver = webdriver.Chrome()
-        bbc_cricket_driver.get("https://www.bbc.com/sport/cricket")
-
-        bbc_golf_driver = webdriver.Chrome()
-        bbc_golf_driver.get("https://www.bbc.com/sport/golf")
-
-    def espn_drivers():
-        global espn_football_driver, espn_baseball_driver, espn_golf_driver, espn_golf_driver
-        espn_football_driver = webdriver.Chrome()
-        espn_football_driver.get("https://www.espn.in/football")
-
-        espn_baseball_driver = webdriver.Chrome()
-        espn_baseball_driver.get("https://www.espn.in/baseball")
-
-        espn_cricket_driver = webdriver.Chrome()
-        espn_cricket_driver.get("https://www.espn.in/cricket")
-
-        espn_golf_driver = webdriver.Chrome()
-        espn_golf_driver.get("https://www.espn.in/golf")
-
-    def twitter_driver():
-        global twitter_driver
-        twitter_driver = webdriver.Chrome(options=options)
-        twitter_driver.get("https://twitter.com/login")
-        
-    t3 = Thread(target=twitter_driver, args=())
-    t3.start()
-    
-    t1 = Thread(target=bbc_drivers,args=())
-    t1.start()
-
-    t2 = Thread(target=espn_drivers, args=())
-    t2.start()
-
-    
 
 class ScrollFrame(Frame):
     def __init__(self, parent):
@@ -175,7 +119,7 @@ def options_raise():
     t.start()
 
 def display_data():
-    messagebox.showinfo("Please wait","""You are not a Robot but, I am so I will take sometime to scrape data. Hope that's okay Human.\n
+    messagebox.showinfo("Please wait","""WebScraping is an slow process, loading results may take time.\n
     Beep. Boop. Beep.""")
 
     baseframe.tkraise()
@@ -226,7 +170,7 @@ def twitter_feed():
 
 def bbc_news_sports():
     dr = bbc_sport_driver()
-    sports = ['football','cricket','golf']
+    sports = ['football','olympics','cricket','golf','rugby-union','tennis','boxing']
     i = 0
     while not until_exit and i<len(sports):
 
@@ -240,7 +184,6 @@ def bbc_news_sports():
             if data:
                 try:
                     data = data.text
-                    print("BBC Sport",data)
                     b = News_bbc(bbc_frame, data, y_bbc, root)
                     b.create_news()
                     if until_exit:
@@ -256,12 +199,11 @@ def bbc_news_sports():
 
 def espn_news():
     driver = webdriver.Chrome('chromedriver.exe',options=optionschrome)
-    sports = ['football','cricket','golf']
+    sports = ['boxing','football','golf','olympics','rugby','cricket']
     i = 0
     while not until_exit and i<len(sports):
         
-        
-        driver.get("https://www.espn.in/{0}/".format(sports[i]))
+        driver.get("https://www.espn.co.uk/{0}/".format(sports[i]))
         first_card = espn_data(driver)
         first_data  = get_main_card(first_card)
         
@@ -301,7 +243,6 @@ def match_results():
 
 def first_results(v):
     value = v.lower()
-    print(value, "frame1")
 
     if value=='basketball' or value=='rugby':
         path = 'https://www.flashscore.co.uk/{}/'.format(value)
@@ -326,6 +267,9 @@ def first_results(v):
 
     Label(frame1,text=value.upper(),bg='white',font=("Arial",16)).place(relx=0.4,relwidth=0.2,y=2)
     Label(frame1,text=path,bg='white',font=("Arial",12)).place(relx=0.3,y=80)
+    searchs1.config(state='normal')
+    search_button_1.config(state='normal')
+    reset_button1.config(state='normal')
     
     if block:
         if value=='football':
@@ -336,6 +280,9 @@ def first_results(v):
                 if r!="-" and r!=" - ":
                     sresult = Football(frame1, home[i].text, away[i].text, r)
                     sresult.create_widgets()
+                    if search_1:
+                        frame1_driver.quit()
+                        return
                     time.sleep(10)
                     sresult.home.destroy()
                     sresult.away.destroy()
@@ -347,17 +294,17 @@ def first_results(v):
         elif value=='cricket':
             home, homescore, away, awayscore  = get_results(block, value, frame1_driver)
             i = 0
-            print("inner cricket")
             while i<len(home) and not search_1:
-                print("Cricket")
-                if "/" in homescore[i].text or "/" in awayscore[i].text:
-                    sresult = Cricket(frame1, home[i].text, homescore[i].text, away[i].text, awayscore[i].text)
-                    sresult.create_widgets()
-                    time.sleep(10)
-                    sresult.homew.destroy()
-                    sresult.awayw.destroy()
-                    sresult.result.destroy()
-                    i+=1
+                sresult = Cricket(frame1, home[i].text, homescore[i].text, away[i].text, awayscore[i].text)
+                sresult.create_widgets()
+                if search_1:
+                    frame1_driver.quit()
+                    return
+                time.sleep(10)
+                sresult.homew.destroy()
+                sresult.awayw.destroy()
+                sresult.result.destroy()
+                i+=1
                 if i==len(home):
                     i = 0
                     
@@ -367,9 +314,11 @@ def first_results(v):
             i = 0
             while i<len(home) and not search_1:
                 if "-" not in homescore[i].text:
-                    print("Home baseket ball",home[i].text)
                     sresult = BasketballRugby(frame1, home[i].text, homescore[i].text, away[i].text, awayscore[i].text)
                     sresult.create_widgets()
+                    if search_1:
+                        frame1_driver.quit()
+                        return
                     time.sleep(10)
                     sresult.homew.destroy()
                     sresult.awayw.destroy()
@@ -379,12 +328,17 @@ def first_results(v):
                     i = 0
 
         elif value=='boxing':
+            searchs1.config(state='disabled')
+            search_button_1.config(state='disabled')
+            reset_button1.config(state='disabled')
             date, result  = get_results(block, value, frame1_driver)
             i = 0
             while i<len(date) and not search_1:
-                print("boxing",date[i].text)
                 sresult = Boxing(frame1, date[i].text, result[i].text,)
                 sresult.create_widgets()
+                if search_1:
+                    frame1_driver.quit()
+                    return
                 time.sleep(10)
                 sresult.newsw.destroy()
 
@@ -392,28 +346,32 @@ def first_results(v):
                 if i==len(date):
                     i = 0
         elif value=='golf':
+            Label(frame1,text="Player",justify='left',bg='white').place(relx=0.2,relwidth=0.2,height=70,y=260)
+            Label(frame1,text="par",justify='left',bg='white').place(relx=0.42,relwidth=0.1,height=70,y=260)
+            Label(frame1,text="T",justify='left',bg='white').place(relx=0.54,relwidth=0.1,height=70,y=260)
+            Label(frame1,text="R",justify='left',bg='white').place(relx=0.66,relwidth=0.1,height=70,y=260)
             rank, name, par, today, result, country  = get_results(block, value, frame1_driver)
             i = 0
-            print("inner goolf")
             while i<len(rank) and not search_1:
-                print("golf")
-                if par[i].text.replace("-","").isdigit():
-                    print(rank[i].text)
-                    print(name[i].text)
-                    print(par[i].text)
-                    print(result[i].text)
-                    print(country[i].text)
+                if name[i].text.lower()!='player':
+
                     sresult = Golf(frame1,rank[i].text, name[i].text, par[i].text, today[i].text, result[i].text, country[i].text )
                     sresult.create_widgets()
+                    if search_1:
+                        frame1_driver.quit()
+                        return
                     time.sleep(10)
                     sresult.rankw.destroy()
-                    i+=1
+                    sresult.countryw.destroy()
+                    sresult.namew.destroy()
+                    sresult.parw.destroy()
+                i+=1
                 if i==len(rank):
                     i = 0
 
 def second_results(v):
     value = v.lower()
-    print(value,"frame2")
+
     if value=='basketball' or value=='rugby':
         path = 'https://www.flashscore.co.uk/{}/'.format(value)
         frame2_driver, block = get_basketball()
@@ -434,20 +392,25 @@ def second_results(v):
         frame2_driver, block = get_boxing()
         path = 'https://www.boxing247.com/boxing-results'
         
-
+  
     Label(frame2,text=value.upper(),bg='white',font=("Arial",16)).place(relx=0.4,relwidth=0.2,y=2)
     Label(frame2,text=path,bg='white',font=("Arial",12)).place(relx=0.3,y=80)
+    searchs2.config(state='normal')
+    search_button_2.config(state='normal')
+    reset_button2.config(state='normal')
     
     if block:
         if value=='football':
             home, away, result = get_results(block, value, frame2_driver)
             i = 0
-            while i<len(home) and not search_1:
+            while i<len(home) and not search_2:
                 r = result[i].text.replace("\n"," ")
                 if r!="-" and r!=" - ":
-                    print("football",home[i].text)
                     sresult = Football(frame2, home[i].text, away[i].text, r)
                     sresult.create_widgets()
+                    if search_2:
+                        frame2_driver.quit()
+                        return
                     time.sleep(10)
                     sresult.home.destroy()
                     sresult.away.destroy()
@@ -459,16 +422,17 @@ def second_results(v):
         elif value=='cricket':
             home, homescore, away, awayscore  = get_results(block, value, frame2_driver)
             i = 0
-            while i<len(home) and not search_1:
-                print("inner cricket")
-                if "/" in homescore[i].text or "/" in awayscore[i].text:
-                    sresult = Cricket(frame2, home[i].text, homescore[i].text, away[i].text, awayscore[i].text)
-                    sresult.create_widgets()
-                    time.sleep(10)
-                    sresult.homew.destroy()
-                    sresult.awayw.destroy()
-                    sresult.result.destroy()
-                    i+=1
+            while i<len(home) and not search_2:
+                sresult = Cricket(frame2, home[i].text, homescore[i].text, away[i].text, awayscore[i].text)
+                sresult.create_widgets()
+                if search_2:
+                    frame2_driver.quit()
+                    return
+                time.sleep(10)
+                sresult.homew.destroy()
+                sresult.awayw.destroy()
+                sresult.result.destroy()
+                i+=1
                 if i==len(home):
                     i = 0
                     
@@ -477,11 +441,13 @@ def second_results(v):
             home, homescore, away, awayscore  = get_results(block, value, frame2_driver)
 
             i = 0
-            while i<len(home) and not search_1:
+            while i<len(home) and not search_2:
                 if "-" not in homescore[i].text:
-                    print("rugby basketball",homescore[i].text)
                     sresult = BasketballRugby(frame2, home[i].text, homescore[i].text, away[i].text, awayscore[i].text)
                     sresult.create_widgets()
+                    if search_2:
+                        frame2_driver.quit()
+                        return
                     time.sleep(10)
                     sresult.homew.destroy()
                     sresult.awayw.destroy()
@@ -491,13 +457,17 @@ def second_results(v):
                     i = 0
 
         elif value=='boxing':
+            searchs2.config(state='disabled')
+            search_button_2.config(state='disabled')
+            reset_button2.config(state='disabled')
             date, result  = get_results(block, value, frame2_driver)
             i = 0
-            while i<len(date) and not search_1:
-                print("Boxing2")
-                print(date[i].text)
+            while i<len(date) and not search_2:
                 sresult = Boxing(frame2, date[i].text, result[i].text,)
                 sresult.create_widgets()
+                if search_2:
+                    frame2_driver.quit()
+                    return
                 time.sleep(10)
                 sresult.newsw.destroy()
 
@@ -507,27 +477,23 @@ def second_results(v):
         elif value=='golf':
             rank, name, par, today, result, country  = get_results(block, value, frame2_driver)
             i = 0
-            while i<len(rank) and not search_1:
-                print("Inner golf")
-                if par[i].text.replace("-","").isdigit():
-                    print("Golf2")
-
-                    print(rank[i].text)
-                    print(name[i].text)
-                    print(par[i].text)
-                    print(result[i].text)
-                    print(country[i].text)
-                    sresult = Golf(frame2,rank[i].text, name[i].text, par[i].text, today[i].text, result[i].text, country[i].text )
-                    sresult.create_widgets()
-                    time.sleep(10)
-                    sresult.rankw.destroy()
-                    i+=1
+            while i<len(rank) and not search_2:
+                sresult = Golf(frame2,rank[i].text, name[i].text, par[i].text, today[i].text, result[i].text, country[i].text )
+                sresult.create_widgets()
+                if search_2:
+                    frame2_driver.quit()
+                    return
+                time.sleep(10)
+                sresult.rankw.destroy()
+                sresult.countryw.destroy()
+                sresult.namew.destroy()
+                sresult.parw.destroy()
+                i+=1
                 if i==len(rank):
                     i = 0
 
 def third_results(v):
     value = v.lower()
-    print(value)
     if value=='basketball' or value=='rugby':
         path = 'https://www.flashscore.co.uk/{}/'.format(value)
         frame3_driver, block = get_basketball()
@@ -551,16 +517,22 @@ def third_results(v):
 
     Label(frame3,text=value.upper(),bg='white',font=("Arial",16)).place(relx=0.4,relwidth=0.2,y=2)
     Label(frame3,text=path,bg='white',font=("Arial",12)).place(relx=0.3,y=80)
+    searchs3.config(state='normal')
+    search_button_3.config(state='normal')
+    reset_button3.config(state='normal')
     
     if block:
         if value=='football':
             home, away, result = get_results(block, value, frame3_driver)
             i = 0
-            while i<len(home) and not search_1:
+            while i<len(home) and not search_3:
                 r = result[i].text.replace("\n"," ")
                 if r!="-" and r!=" - ":
                     sresult = Football(frame3, home[i].text, away[i].text, r)
                     sresult.create_widgets()
+                    if search_3:
+                        frame3_driver.quit()
+                        return
                     time.sleep(10)
                     sresult.home.destroy()
                     sresult.away.destroy()
@@ -572,11 +544,13 @@ def third_results(v):
         elif value=='cricket':
             home, homescore, away, awayscore  = get_results(block, value, frame3_driver)
             i = 0
-            while i<len(home) and not search_1:
-                print("Cricket inner")
+            while i<len(home) and not search_3:
                 if "/" in homescore[i].text or "/" in awayscore[i].text:
                     sresult = Cricket(frame3, home[i].text, homescore[i].text, away[i].text, awayscore[i].text)
                     sresult.create_widgets()
+                    if search_3:
+                        frame3_driver.quit()
+                        return
                     time.sleep(10)
                     sresult.homew.destroy()
                     sresult.awayw.destroy()
@@ -590,10 +564,13 @@ def third_results(v):
             home, homescore, away, awayscore  = get_results(block, value, frame3_driver)
             
             i = 0
-            while i<len(home) and not search_1:
+            while i<len(home) and not search_3:
                 if "-" not in homescore[i].text:
                     sresult = BasketballRugby(frame3, home[i].text, homescore[i].text, away[i].text, awayscore[i].text)
                     sresult.create_widgets()
+                    if search_3:
+                        frame3_driver.quit()
+                        return
                     time.sleep(10)
                     sresult.homew.destroy()
                     sresult.awayw.destroy()
@@ -603,14 +580,17 @@ def third_results(v):
                     i = 0
 
         elif value=='boxing':
-
+            searchs3.config(state='disabled')
+            search_button_3.config(state='disabled')
+            reset_button3.config(state='disabled')
             date, result  = get_results(block, value, frame3_driver)
             i = 0
-            while i<len(date) and not search_1:
-                print("Boxing")
-                print(date[i].text,result[i].text)
+            while i<len(date) and not search_3:
                 sresult = Boxing(frame3, date[i].text, result[i].text,)
                 sresult.create_widgets()
+                if search_3:
+                    frame3_driver.quit()
+                    return
                 time.sleep(10)
                 sresult.newsw.destroy()
 
@@ -620,22 +600,345 @@ def third_results(v):
 
         elif value=='golf':
             rank, name, par, today, result, country  = get_results(block, value, frame3_driver)
+            print(result,value)
             i = 0
-            while i<len(rank) and not search_1:
-                if par[i].text.replace("-","").isdigit():
-                    print("GOlf innner")
-                    print(rank[i].text)
-                    print(name[i].text)
-                    print(par[i].text)
-                    print(result[i].text)
-                    print(country[i].text)
-                    sresult = Golf(frame3,rank[i].text, name[i].text, par[i].text, today[i].text, result[i].text, country[i].text )
-                    sresult.create_widgets()
-                    time.sleep(10)
-                    sresult.rankw.destroy()
-                    i+=1
+            while i<len(rank) and not search_3:
+
+                sresult = Golf(frame3,rank[i].text, name[i].text, par[i].text, today[i].text, result[i].text, country[i].text )
+                sresult.create_widgets()
+                if search_3:
+                    frame3_driver.quit()
+                    return
+                time.sleep(10)
+                sresult.rankw.destroy()
+                i+=1
                 if i==len(rank):
                     i = 0
+
+def search_frame1():
+    value = option1var.get().lower()
+    global search_1
+    search_1 = 1
+    query = league1.get()
+    query = query.replace(" ","")
+    
+    if value == 'football':
+        local_driver, section = search_sport('football',query.lower())
+        if local_driver==None:
+            return
+        home, away, result = get_results(section, value, local_driver)
+        i = 0
+        while i<len(home) and search_1:
+            r = result[i].text.replace("\n"," ")
+            if r!="-" and r!=" - ":
+                sresult = Football(frame1, home[i].text, away[i].text, r)
+                sresult.create_widgets()
+                if not search_1:
+                    local_driver.quit()
+                    return
+                time.sleep(10)
+                sresult.home.destroy()
+                sresult.away.destroy()
+                sresult.result.destroy()
+                i+=1
+            if i==len(home):
+                i = 0
+
+    elif value == 'basketball' or value == 'rugby':
+        if value=='basketball':
+            local_driver, section = search_sport('basketball',query.lower())
+        else :
+            local_driver, section = search_sport('rugby',query.lower())
+        if local_driver==None:
+            return
+        home, homescore, away, awayscore  = get_results(section, value, local_driver)
+            
+        i = 0
+        while i<len(home) and search_1:
+            if "-" not in homescore[i].text:
+                sresult = BasketballRugby(frame1, home[i].text, homescore[i].text, away[i].text, awayscore[i].text)
+                sresult.create_widgets()
+                if not search_sport:
+                    local_driver.quit()
+                    return
+
+                time.sleep(10)
+                sresult.homew.destroy()
+                sresult.awayw.destroy()
+                sresult.result.destroy()
+                i+=1
+            if i==len(home):
+                i = 0
+
+    elif value == 'cricket' :
+        local_driver, section = search_sport('cricket',query.lower())
+        if local_driver==None:
+            return
+        home, homescore, away, awayscore  = get_results(section, value, local_driver)
+        i = 0
+        while i<len(home) and search_1:
+            sresult = Cricket(frame1, home[i].text, homescore[i].text, away[i].text, awayscore[i].text)
+            sresult.create_widgets()
+            if not search_1:
+                local_driver.quit()
+                return
+            time.sleep(10)
+            sresult.homew.destroy()
+            sresult.awayw.destroy()
+            sresult.result.destroy()
+            i+=1
+            if i==len(home):
+                i = 0
+
+    elif value == 'golf':
+        local_driver, section = search_sport('golf',query.lower())
+        if local_driver == None:
+            return
+        rank, name, par, today, result, country  = get_results(section, value, local_driver)
+        i = 0
+        while i<len(rank) and search_1:
+            sresult = Golf(frame1,rank[i].text, name[i].text, par[i].text, today[i].text, result[i].text, country[i].et_attribute('title') )
+            sresult.create_widgets()
+            if not search_1:
+                local_driver.quit()
+                return
+            time.sleep(10)
+            sresult.rankw.destroy()
+            sresult.countryw.destroy()
+            sresult.namew.destroy()
+            sresult.parw.destroy()
+            i+=1
+            if i==len(rank):
+                i = 0
+        
+
+def search_frame2():
+    value = option2var.get().lower()
+    global search_2
+    search_2 = 1
+    query = league2.get()
+    query = query.replace(" ","")
+    
+    if value == 'football':
+        local_driver, section = search_sport('football',query.lower())
+        if local_driver==None:
+            return
+        home, away, result = get_results(section, value, local_driver)
+        i = 0
+        while i<len(home) and search_2:
+            r = result[i].text.replace("\n"," ")
+            if r!="-" and r!=" - ":
+                sresult = Football(frame2, home[i].text, away[i].text, r)
+                sresult.create_widgets()
+                if not search_2:
+                    local_driver.quit()
+                    return
+                time.sleep(10)
+                sresult.home.destroy()
+                sresult.away.destroy()
+                sresult.result.destroy()
+                i+=1
+            if i==len(home):
+                i = 0
+
+    elif value == 'basketball' or value == 'rugby':
+        if value=='basketball':
+            local_driver, section = search_sport('basketball',query.lower())
+        else :
+            local_driver, section = search_sport('rugby',query.lower())
+        if local_driver==None:
+            return
+        home, homescore, away, awayscore  = get_results(section, value, local_driver)
+            
+        i = 0
+        while i<len(home) and search_2:
+            if "-" not in homescore[i].text:
+                sresult = BasketballRugby(frame2, home[i].text, homescore[i].text, away[i].text, awayscore[i].text)
+                sresult.create_widgets()
+                if not search_sport:
+                    local_driver.quit()
+                    return
+
+                time.sleep(10)
+                sresult.homew.destroy()
+                sresult.awayw.destroy()
+                sresult.result.destroy()
+                i+=1
+            if i==len(home):
+                i = 0
+
+    elif value == 'cricket' :
+        local_driver, section = search_sport('cricket',query.lower())
+        if local_driver==None:
+            return
+        home, homescore, away, awayscore  = get_results(section, value, local_driver)
+        i = 0
+        while i<len(home) and search_2:
+                
+
+            sresult = Cricket(frame2, home[i].text, homescore[i].text, away[i].text, awayscore[i].text)
+            sresult.create_widgets()
+            if not search_2:
+                local_driver.quit()
+                return
+            time.sleep(10)
+            sresult.homew.destroy()
+            sresult.awayw.destroy()
+            sresult.result.destroy()
+            i+=1
+            if i==len(home):
+                i = 0
+
+    elif value == 'golf':
+        local_driver, section = search_sport('golf',query.lower())
+        if local_driver == None:
+            return
+        rank, name, par, today, result, country  = get_results(section, value, local_driver)
+        i = 0
+        while i<len(rank) and search_2:
+
+            sresult = Golf(frame2,rank[i].text, name[i].text, par[i].text, today[i].text, result[i].text, country[i].get_attribute('title') )
+            sresult.create_widgets()
+            if not search_2:
+                local_driver.quit()
+                return
+            time.sleep(10)
+            sresult.rankw.destroy()
+            sresult.countryw.destroy()
+            sresult.namew.destroy()
+            sresult.parw.destroy()
+            i+=1
+            if i==len(rank):
+                i = 0
+
+def search_frame3():
+    value = option3var.get().lower()
+    global search_3
+    search_3 = 1
+    query = league3.get()
+    query = query.replace(" ","")
+    
+    if value == 'football':
+        local_driver, section = search_sport('football',query.lower())
+        if local_driver==None:
+            return
+        home, away, result = get_results(section, value, local_driver)
+        i = 0
+        while i<len(home) and search_3:
+            r = result[i].text.replace("\n"," ")
+            if r!="-" and r!=" - ":
+                sresult = Football(frame3, home[i].text, away[i].text, r)
+                sresult.create_widgets()
+                if not search_3:
+                    local_driver.quit()
+                    return
+                time.sleep(10)
+                sresult.home.destroy()
+                sresult.away.destroy()
+                sresult.result.destroy()
+                i+=1
+            if i==len(home):
+                i = 0
+
+    elif value == 'basketball' or value == 'rugby':
+        if value=='basketball':
+            local_driver, section = search_sport('basketball',query.lower())
+        else :
+            local_driver, section = search_sport('rugby',query.lower())
+        if local_driver==None:
+            return
+        home, homescore, away, awayscore  = get_results(section, value, local_driver)
+            
+        i = 0
+        while i<len(home) and search_3:
+            if "-" not in homescore[i].text:
+                sresult = BasketballRugby(frame3, home[i].text, homescore[i].text, away[i].text, awayscore[i].text)
+                sresult.create_widgets()
+                if not search_sport:
+                    local_driver.quit()
+                    return
+
+                time.sleep(10)
+                sresult.homew.destroy()
+                sresult.awayw.destroy()
+                sresult.result.destroy()
+                i+=1
+            if i==len(home):
+                i = 0
+
+    elif value == 'cricket' :
+        local_driver, section = search_sport('cricket',query.lower())
+        if local_driver==None:
+            return
+        home, homescore, away, awayscore  = get_results(section, value, local_driver)
+        i = 0
+        while i<len(home) and search_3:
+            sresult = Cricket(frame3, home[i].text, homescore[i].text, away[i].text, awayscore[i].text)
+            sresult.create_widgets()
+            if not search_3:
+                local_driver.quit()
+                return
+            time.sleep(10)
+            sresult.homew.destroy()
+            sresult.awayw.destroy()
+            sresult.result.destroy()
+            i+=1
+            if i==len(home):
+                i = 0
+
+    elif value == 'golf':
+        local_driver, section = search_sport('golf',query.lower())
+        if local_driver == None:
+            return
+        rank, name, par, today, result, country  = get_results(section, value, local_driver)
+        i = 0
+        while i<len(rank) and search_3:
+            sresult = Golf(frame3,rank[i].text, name[i].text, par[i].text, today[i].text, result[i].text, country[i].get_attribute('title') )
+            sresult.create_widgets()
+            if not search_3:
+                local_driver.quit()
+                return
+            time.sleep(10)
+            sresult.rankw.destroy()
+            sresult.countryw.destroy()
+            sresult.namew.destroy()
+            sresult.parw.destroy()
+            i+=1
+            if i==len(rank):
+                i = 0
+
+ 
+def function_search_frame1():
+    t = Thread(target=search_frame1,args=())
+    t.start()
+
+def function_search_frame2():
+    t = Thread(target=search_frame2,args=())
+    t.start()
+
+def function_search_frame3():
+    t = Thread(target=search_frame3,args=())
+    t.start()
+
+
+def reset_update1():
+    global search_1
+    search_1 = 0
+    t1 = Thread(target=first_results,args=(option1var.get(),))
+    t1.start()
+
+def reset_update2():
+    global search_2
+    search_2 = 0
+    t2 = Thread(target=second_results,args=(option2var.get(),))
+    t2.start()
+
+def reset_update3():
+    global search_3
+    search_3 = 0
+    t3 = Thread(target=third_results,args=(option3var.get(),))
+    t3.start()
+
 
 def thread_display_data():
     t = Thread(target=display_data,args=())
@@ -684,7 +987,6 @@ def set_date():
     t11 = Thread(target=change_data,args=())
     t11.start()
 
-   
 
 def update_time():
     def change_time():
@@ -696,7 +998,6 @@ def update_time():
     t12.start()
 
 def get_weather_details():
-
     loc = region+", "+city
     loc_driver.get('https://www.accuweather.com/')
     loc_driver.implicitly_wait(3)
@@ -724,16 +1025,15 @@ def dummy_get_weather():
     t1.start()
 
 
-
-# frame1_driver = webdriver.Chrome('chromedriver.exe',options=optionschrome)
-# frame2_driver = webdriver.Chrome('chromedriver.exe',options=optionschrome)
-# frame3_driver = webdriver.Chrome('chromedriver.exe',options=optionschrome)
-loc_driver = webdriver.Chrome('chromedriver.exe',)
+loc_driver = weather_main()
 
 root = Tk()
 root.configure(background="blue")
 root.geometry("700x600")
 
+league1= StringVar()
+league2 = StringVar()
+league3 = StringVar()
 
 twitter_logo = Image.open('twitter.png')
 twitter_logo = twitter_logo.resize((30,30))
@@ -774,22 +1074,57 @@ Label(espn_frame, bg='#03dffc').place(rely=0.95,relx=0.33,relwidth=0.33,height=4
 
 
 frame1 = Frame(display,bg='white')
-frame1.pack(ipady=300,fill='x',expand=1)
+frame1.pack(ipady=250,fill='x',expand=1)
 Label(frame1, bg='#03dffc').place(rely=0.93,relx=0.33,relwidth=0.33,height=4)
+
+searchs1 = Entry(frame1,textvariable=league1,borderwidth=1,highlightbackground='black',highlightthickness=2,font=("Arial",13))
+searchs1.place(relx=0.17,relwidth=0.25,height=35,y=150)
+searchs1.config(state='disabled')
+
+search_button_1 = Button(frame1,text='Search',command=function_search_frame1)
+search_button_1.place(relx=0.43,relwidth=0.2,height=35,y=150)
+search_button_1.config(state='disabled')
+
+reset_button1 = Button(frame1, text='Reset',command=reset_update1)
+reset_button1.place(relx=0.64,relwidth=0.14,height=35,y=150)
+reset_button1.config(state='disabled')
 
 
 frame2 = Frame(display,bg='white')
-frame2.pack(ipady=300,fill='x',expand=1)
+frame2.pack(ipady=250,fill='x',expand=1)
 Label(frame2, bg='#03dffc').place(rely=0.93,relx=0.33,relwidth=0.33,height=4)
 
+searchs2 = Entry(frame2,textvariable=league2,borderwidth=1,highlightbackground='black',highlightthickness=2,font=("Arial",13))
+searchs2.place(relx=0.17,relwidth=0.25,height=35,y=150)
+searchs2.config(state='disabled')
+
+search_button_2 = Button(frame2,text='Search',command=function_search_frame2)
+search_button_2.place(relx=0.43,relwidth=0.2,height=35,y=150)
+search_button_2.config(state='disabled')
+
+reset_button2 = Button(frame2, text='Reset',command=reset_update2)
+reset_button2.place(relx=0.64,relwidth=0.14,height=35,y=150)
+reset_button2.config(state='disabled')
 
 frame3 = Frame(display,bg='white')
-frame3.pack(ipady=300,fill='x',expand=1)
+frame3.pack(ipady=250,fill='x',expand=1)
 Label(frame3, bg='#03dffc').place(rely=0.93,relx=0.33,relwidth=0.33,height=4)
+
+searchs3 = Entry(frame3,textvariable=league3,borderwidth=1,highlightbackground='black',highlightthickness=2,font=("Arial",13))
+searchs3.place(relx=0.17,relwidth=0.25,height=35,y=150)
+searchs3.config(state='disabled')
+
+search_button_3 = Button(frame3,text='Search',command=function_search_frame3)
+search_button_3.place(relx=0.43,relwidth=0.2,height=35,y=150)
+search_button_3.config(state='disabled')
+
+reset_button3 = Button(frame3, text='Reset',command=reset_update3)
+reset_button3.place(relx=0.64,relwidth=0.14,height=35,y=150)
+reset_button3.config(state='disabled')
 
 
 frame4 = Frame(display,bg='white')
-frame4.pack(ipady=400,fill='x',expand=1)
+frame4.pack(ipady=300,fill='x',expand=1)
 
 time_label = Label(frame4,bg='white',font=("Arial",13))
 time_label.place(relx=0.35,rely=0.1,relwidth=0.3)
@@ -842,17 +1177,17 @@ login_button.place(relx=0.4,rely=0.8,width=150,height=40)
 
 #Options Frame
 
-Label(options_frame, text='Select Sports').place(relx=0.45,rely=0.1)
+Label(options_frame, text='Select Sports',bg='white',font=('Arial',15),anchor=CENTER).place(relx=0.35,rely=0.1,relwidth=0.3)
 options = ["None", "Football", "Basketball", "Rugby", "Cricket",  "Golf", "Boxing"]
-option1 = OptionMenu(options_frame,option1var,*options,)
-option2 = OptionMenu(options_frame,option2var,*options,)
-option3 = OptionMenu(options_frame,option3var,*options,)
+option1 = ttk.OptionMenu(options_frame,option1var,*options,)
+option2 = ttk.OptionMenu(options_frame,option2var,*options,)
+option3 = ttk.OptionMenu(options_frame,option3var,*options,)
 option1.place(relx=0.3,rely=0.4)
 option2.place(relx=0.6,rely=0.4)
 option3.place(relx=0.45,rely=0.6)
 
-next_button = Button(options_frame,text='Next',command=check_option)
-next_button.place(relx=0.45,rely=0.8)
+next_button = Button(options_frame,text='Next',command=check_option,borderwidth=1,highlightbackground='black',highlightthickness=2,font=("Arial",13))
+next_button.place(relx=0.45,rely=0.8,relwidth=0.1)
 
 
 #display frame

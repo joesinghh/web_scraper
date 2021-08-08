@@ -7,8 +7,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common import exceptions
 import time
 # from tkinter import *
-optionschrome = webdriver.ChromeOptions()
-optionschrome.add_argument("headless")
+options = webdriver.ChromeOptions()
+options.add_argument("headless")
 
 def search_by_location(driver):
 
@@ -24,10 +24,11 @@ def search_by_location(driver):
     return temp, desc
 
 def weather_main():
-    pass
+    driver = webdriver.Chrome('chromedriver.exe',options=options)
+    return driver
 
 if __name__=='__main__':
-    loc_driver = weather_main("karnataka, bangalore")
+    loc_driver = weather_main()
 
     t, d = search_by_location(loc_driver)
     print(t.text,d.text)

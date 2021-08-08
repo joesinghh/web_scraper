@@ -4,11 +4,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common import exceptions
-import chromedriver_binary
 from tkinter import *
 
 def espn_data(driver):
-    print("ESPN")
 
     try:
         main_card = WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH,'/html/body/div[5]/section/section/div/section[2]')))
@@ -18,7 +16,6 @@ def espn_data(driver):
 
 
 def get_main_card(main_card):
-    print("espn")
     if main_card:
         try:
 
@@ -43,7 +40,6 @@ class News_espn(object):
         text = self.news_data
         count = text.count("\n")
         text = text.replace("\n"," ")
-        print(text)
         self.news   = Text(self.frame, bg='red',wrap=WORD,exportselection=False,height=count+1,relief='flat',justify='center')
         self.news.insert(END,text)
         self.news.place(relwidth=0.7,relheight=0.7,relx=0.15,rely=0.3)
