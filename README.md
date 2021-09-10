@@ -15,11 +15,11 @@ example : Inorder to search "La liga" user can write any thing like
 - LA LIGA
 - la liga
 - La liga 
-(Search queries are case insentive)
+(Search queries are case insensitive)
 
 But not
 - la-liga
-(No special/whitespace character inbetween words except for single space " ")
+(No special/whitespace character in between words except for single space " ")
 
 # 
 Feel free to contribute to this repository. 
