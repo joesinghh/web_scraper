@@ -214,19 +214,19 @@ class Golf(object):
         self.countryw.insert(END,self.country)
         # self.countryw.place(relx=0.1,width=70,height=70)
 
-        self.namew = Text(self.frame,wrap=WORD,exportselection=False)
+        self.namew = Text(self.frame,wrap=WORD,exportselection=False,relief='flat')
         self.namew.insert(END,self.name)
         self.namew.place(relx=0.2,relwidth=0.2,height=70,y=320)
 
-        self.parw = Text(self.frame,wrap=WORD,exportselection=False)
+        self.parw = Text(self.frame,wrap=WORD,exportselection=False,relief='flat')
         self.parw.insert(END,self.par)
         self.parw.place(relx=0.42,relwidth=0.1,height=70,y=320)
 
-        self.todayw = Text(self.frame,wrap=WORD,exportselection=False)
+        self.todayw = Text(self.frame,wrap=WORD,exportselection=False,relief='flat')
         self.todayw.insert(END,self.today)
         self.todayw.place(relx=0.54,relwidth=0.1,height=70,y=320)
 
-        self.resultw = Text(self.frame,wrap=WORD,exportselection=False)
+        self.resultw = Text(self.frame,wrap=WORD,exportselection=False,relief='flat')
         self.resultw.insert(END,self.result)
         self.resultw.place(relx=0.66,relwidth=0.1,height=70,y=320)
 

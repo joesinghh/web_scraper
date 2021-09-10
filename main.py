@@ -475,6 +475,10 @@ def second_results(v):
                 if i==len(date):
                     i = 0
         elif value=='golf':
+            Label(frame2,text="Player",justify='left',bg='white').place(relx=0.2,relwidth=0.2,height=70,y=260)
+            Label(frame2,text="par",justify='left',bg='white').place(relx=0.42,relwidth=0.1,height=70,y=260)
+            Label(frame2,text="T",justify='left',bg='white').place(relx=0.54,relwidth=0.1,height=70,y=260)
+            Label(frame2,text="R",justify='left',bg='white').place(relx=0.66,relwidth=0.1,height=70,y=260)
             rank, name, par, today, result, country  = get_results(block, value, frame2_driver)
             i = 0
             while i<len(rank) and not search_2:
@@ -599,8 +603,12 @@ def third_results(v):
                     i = 0
 
         elif value=='golf':
+            Label(frame3,text="Player",justify='left',bg='white').place(relx=0.2,relwidth=0.2,height=70,y=260)
+            Label(frame3,text="par",justify='left',bg='white').place(relx=0.42,relwidth=0.1,height=70,y=260)
+            Label(frame3,text="T",justify='left',bg='white').place(relx=0.54,relwidth=0.1,height=70,y=260)
+            Label(frame3,text="R",justify='left',bg='white').place(relx=0.66,relwidth=0.1,height=70,y=260)
             rank, name, par, today, result, country  = get_results(block, value, frame3_driver)
-            print(result,value)
+
             i = 0
             while i<len(rank) and not search_3:
 
@@ -998,16 +1006,16 @@ def update_time():
     t12.start()
 
 def get_weather_details():
-    loc = region+", "+city
-    loc_driver.get('https://www.accuweather.com/')
+    # loc = region+", "+city
+    # loc_driver.get('https://www.weatherbug.com/')
     loc_driver.implicitly_wait(3)
-    try :
-        search_bar = WebDriverWait(loc_driver, 120).until(EC.presence_of_element_located((By.XPATH,"/html/body/div/div[1]/div[3]/div[1]/form/input")))
-    except exceptions.TimeoutException:
-        loc_driver.refresh()
-        search_bar = WebDriverWait(loc_driver, 120).until(EC.presence_of_element_located((By.XPATH,"/html/body/div/div[1]/div[3]/div[1]/form/input")))
+    # try :
+    #     search_bar = WebDriverWait(loc_driver, 120).until(EC.presence_of_element_located((By.XPATH,"/html/body/div/div[1]/div[3]/div[1]/form/input")))
+    # except exceptions.TimeoutException:
+    #     loc_driver.refresh()
+    #     search_bar = WebDriverWait(loc_driver, 120).until(EC.presence_of_element_located((By.XPATH,"/html/body/div/div[1]/div[3]/div[1]/form/input")))
 
-    search_bar.send_keys(loc+Keys.RETURN)
+    # search_bar.send_keys(loc+Keys.RETURN)
     
     while not until_exit  :
 
