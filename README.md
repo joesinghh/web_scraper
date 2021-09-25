@@ -4,7 +4,7 @@ Web Scraper for scraping data from the Twitter feed, sports news from espn.com a
 
 It shows Location using IP and current weather for that location. It also shows current Time and Date.
 
-### Following are limitions of this application.
+### Following are limitations of this application.
 
 #
  
